@@ -8,25 +8,28 @@
     aap_password: "{{ pass }}"
     aap_validate_certs: "{{ cert }}"
 
-  pre_tasks:
+  tasks:
     - name: create random string
       set_fact:
         random_suffix: "{{ lookup('ansible.builtin.password', '/dev/null chars=ascii_lowercase,digits length=6') }}"
   
-    - name: prepare inventory
+    - name: Define the inventory name
       set_fact:
-        # Create the single inventory name
-        target_inventory_name: "tmpinventory_{{ random_suffix }}"
-        
-        # Transform onhosts into a list of host objects for that inventory
-        controller_hosts: >-
-          {{
-            onhosts | map('regex_replace', '^(.*)$', {
-              'name': '\\1',
-              'inventory': 'tmpinventory_' ~ random_suffix,
-              'enabled': true
-            }) | list
-          }}
+        target_inv_name: "tmpinventory_{{ random_suffix }}"
 
-  roles:
-    - {role: infra.aap_configuration.controller_hosts, when: controller_hosts is defined}
+    - name: Create the Inventory
+      include_role:
+        name: infra.aap_configuration.controller_inventories
+      vars:
+        # The role expects a list called 'controller_inventories'
+        controller_inventories:
+          - name: "{{ target_inv_name }}"
+            organization: "Default"
+            state: present
+
+    - name: Add Hosts to the Inventory
+      include_role:
+        name: infra.aap_configuration.controller_hosts
+      vars:
+        # Transform the 'onhosts' list into the structure the role expects
+        controller_hosts: "{{ onhosts | map('regex_replace', '^(.*)$', {'name': '\\1', 'inventory': target_inv_name, 'state': 'present'}) | list }}"

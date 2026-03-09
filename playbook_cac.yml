@@ -17,6 +17,12 @@
       set_fact:
         target_inv_name: "tmpinventory_{{ random_suffix }}"
 
+    - name: Build the controller_hosts list for the role
+      set_fact:
+        # We initialize an empty list and append the required dict structure
+        my_formatted_hosts: "{{ my_formatted_hosts | default([]) + [{ 'name': item, 'inventory': target_inv_name, 'state': 'present' }] }}"
+      loop: "{{ onhosts }}"
+
     - name: Create the Inventory
       include_role:
         name: infra.aap_configuration.controller_inventories
@@ -31,5 +37,5 @@
       include_role:
         name: infra.aap_configuration.controller_hosts
       vars:
-        # Transform the 'onhosts' list into the structure the role expects
-        controller_hosts: "{{ onhosts | map('regex_replace', '^(.*)$', {'name': '\\1', 'inventory': target_inv_name, 'state': 'present'}) | list }}"
+        # Pass the list we just built to the role's expected variable
+        controller_hosts: "{{ my_formatted_hosts }}"

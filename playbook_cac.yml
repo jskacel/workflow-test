@@ -6,7 +6,7 @@
     aap_hostname: "{{ aap }}"
     aap_username: "{{ user }}"
     aap_password: "{{ pass }}"
-    aap_ve
+    aap_validate_certs: "{{ cert }}"
 
   pre_tasks:
     - name: create random string

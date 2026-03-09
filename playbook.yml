@@ -1,0 +1,11 @@
+- name: In memory inventory
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+  - name: Create an in memory inventory
+    loop: "{{ onhosts }}"
+    ansible.builtin.add_host:
+      hostname: "{{ item }}"
+      groups:
+      - myinventory
